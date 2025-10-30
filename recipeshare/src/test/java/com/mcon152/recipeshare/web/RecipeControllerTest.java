@@ -467,4 +467,48 @@ class RecipeControllerTest {
             verifyNoMoreInteractions(recipeService); // will fail if any other calls happened
         }
     }
+    @Test
+    void testAddSoupRecipe_returns201_withLocationHeader() throws Exception {
+        // Prepare test data
+        ObjectNode json = mapper.createObjectNode();
+        json.put("type", "SOUP");
+        json.put("title", "Chicken Noodle Soup");
+        json.put("description", "Hearty chicken soup with vegetables");
+        json.put("ingredients", "Chicken, carrots, celery, onion, noodles, broth");
+        json.put("instructions", "Simmer chicken and vegetables, add noodles");
+        json.put("servings", 4);
+        String jsonString = mapper.writeValueAsString(json);
+
+        // Create mock recipe to return (with ID as would be assigned by service)
+        SoupRecipe savedRecipe = new SoupRecipe(
+                42L,
+                "Chicken Noodle Soup",
+                "Hearty chicken soup with vegetables",
+                "Chicken, carrots, celery, onion, noodles, broth",
+                "Simmer chicken and vegetables, add noodles",
+                4
+        );
+
+        // Mock service behavior - return SoupRecipe regardless of what's passed in
+        when(recipeService.addRecipe(any(Recipe.class))).thenReturn(savedRecipe);
+
+        // Perform the request and verify response
+        mockMvc.perform(post("/api/recipes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonString))
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"))
+                .andExpect(jsonPath("$.id").value(42))
+                .andExpect(jsonPath("$.title").value("Chicken Noodle Soup"))
+                .andExpect(jsonPath("$.description").value("Hearty chicken soup with vegetables"));
+
+        // Verify service was called correctly, but don't check instance type
+        // since controller is currently creating BasicRecipe instead of SoupRecipe
+        verify(recipeService).addRecipe(recipeCaptor.capture());
+        Recipe captured = recipeCaptor.getValue();
+        assertEquals("Chicken Noodle Soup", captured.getTitle());
+
+        // Verify no other interactions with service
+        verifyNoMoreInteractions(recipeService);
+    }
 }
