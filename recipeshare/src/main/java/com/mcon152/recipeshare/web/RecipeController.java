@@ -121,7 +121,7 @@ public class RecipeController {
     }
 
     /**
-     * Partial update. 200 OK with updated entity or 404 Not Found.
+     * Partial update. 200 OK with updated  entity or 404 Not Found.
      */
     @PatchMapping("/{id}")
     public ResponseEntity<Recipe> patchRecipe(@PathVariable long id, @RequestBody RecipeRequest partialRequest) {
